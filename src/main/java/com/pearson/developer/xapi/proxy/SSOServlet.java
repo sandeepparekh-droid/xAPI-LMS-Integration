@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 
-import javax.servlet.http.*;
+import jakarta.servlet.http.*;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.validator.routines.EmailValidator;

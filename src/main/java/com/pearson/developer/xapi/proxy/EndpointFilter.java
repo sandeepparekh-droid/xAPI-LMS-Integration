@@ -25,8 +25,8 @@
 */
 package com.pearson.developer.xapi.proxy;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 
 // Validates request are for xAPI endpoints
 public class EndpointFilter implements Filter {

@@ -25,7 +25,7 @@
 */
 package com.pearson.developer.xapi.proxy;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 // Stores the session info issued to Activity Providers
 public class SessionDatabase {
@@ -33,7 +33,7 @@ public class SessionDatabase {
 	// FOR DEMO PURPOSES ONLY
 	// This should be replaced with a persistent data source
 	// Session needs to expire and be purged
-	private static final HashMap<String,String> db = new HashMap<String,String>();
+	private static final ConcurrentHashMap<String,String> db = new ConcurrentHashMap<String,String>();
 	
 	public static void save(String id, String token) {
 		if(id == null || token == null || 

@@ -26,8 +26,15 @@
 package com.pearson.developer.xapi.proxy;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.http.*;
 
@@ -35,15 +42,23 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.commons.validator.routines.UrlValidator;
 
-import java.util.UUID;
-
 import org.imsglobal.lti.BasicLTIUtil;
 import org.imsglobal.lti.launch.LtiVerificationResult;
 
 // Performs LTI before generating the Launch Link for provided Activity Provider
 @SuppressWarnings("serial")
 public class SSOServlet extends HttpServlet {
-	
+
+	private static final Logger LOGGER = Logger.getLogger(SSOServlet.class.getName());
+
+	/**
+	 * Allowed redirect domains. In production, this should be configured
+	 * externally (e.g., via init-param or environment variable).
+	 */
+	private static final Set<String> ALLOWED_REDIRECT_DOMAINS = new HashSet<>(Arrays.asList(
+			// Add trusted activity provider domains here
+	));
+
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		try {
@@ -83,7 +98,22 @@ public class SSOServlet extends HttpServlet {
 			
 			// the parameter is passed double encoded, so decode it once more.
 			activityProvider = URLDecoder.decode(activityProvider,"UTF-8");
-			
+
+			// Security: validate redirect URL to prevent open redirect attacks
+			try {
+				URI redirectUri = new URI(activityProvider);
+				String host = redirectUri.getHost();
+				if (host == null || (!ALLOWED_REDIRECT_DOMAINS.isEmpty() && !ALLOWED_REDIRECT_DOMAINS.contains(host.toLowerCase()))) {
+					LOGGER.log(Level.WARNING, "Blocked redirect to untrusted domain: {0}", host);
+					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Untrusted redirect target");
+					return;
+				}
+			} catch (Exception e) {
+				LOGGER.log(Level.WARNING, "Invalid activity provider URL", e);
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid redirect URL");
+				return;
+			}
+
 			// validate the incoming data is valid
 			try {
 				// userId is expected to be numeric for LearningStudio (TODO - change accordingly)
@@ -137,7 +167,8 @@ public class SSOServlet extends HttpServlet {
 				
 			response.sendRedirect(activityProvider);
 		}
-		catch(Throwable t) {
+		catch(Exception e) {
+			LOGGER.log(Level.SEVERE, "Unexpected error processing SSO request", e);
 			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,"Server Error");
 		}
 	}

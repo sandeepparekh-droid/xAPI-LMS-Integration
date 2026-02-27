@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -37,6 +39,7 @@ import org.apache.commons.codec.binary.Base64;
 
 // Validates auth from Activity Provider before replacing with auth for LRS
 public class AuthFilter implements Filter {
+	private static final Logger LOGGER = Logger.getLogger(AuthFilter.class.getName());
 	private FilterConfig config;
 	
 	public void init(FilterConfig config) throws ServletException {
@@ -66,7 +69,7 @@ public class AuthFilter implements Filter {
 			}
 		}
 		catch(Exception e) {
-			// do nothing
+			LOGGER.log(Level.WARNING, "Authentication failed for request", e);
 		}
 		
 		// proceed to xAPI if session was authorized
